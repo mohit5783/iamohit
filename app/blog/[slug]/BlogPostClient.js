@@ -522,7 +522,7 @@ export default function BlogPostClient({ post, relatedPosts = [] }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="mt-16 p-8 bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-2xl"
+              className="mt-16 p-8 bg-linear-to-br from-gray-900 to-black border border-gray-800 rounded-2xl"
             >
               <div className="flex items-center gap-6">
                 <motion.div
@@ -530,7 +530,7 @@ export default function BlogPostClient({ post, relatedPosts = [] }) {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4 }}
-                  className="w-20 h-20 rounded-full bg-gradient-to-br from-[#f5f543] to-yellow-600 flex items-center justify-center text-3xl font-bold text-black shrink-0"
+                  className="w-20 h-20 rounded-full bg-linear-to-br from-[#f5f543] to-yellow-600 flex items-center justify-center text-3xl font-bold text-black shrink-0"
                 >
                   M
                 </motion.div>
@@ -575,7 +575,7 @@ export default function BlogPostClient({ post, relatedPosts = [] }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="mt-12 text-center p-8 bg-gradient-to-r from-[#f5f543]/10 to-transparent border border-[#f5f543]/20 rounded-2xl"
+              className="mt-12 text-center p-8 bg-linear-to-r from-[#f5f543]/10 to-transparent border border-[#f5f543]/20 rounded-2xl"
             >
               <h3 className="text-2xl font-bold text-white mb-4">
                 Need help scaling your platform?

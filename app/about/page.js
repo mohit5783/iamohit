@@ -1,17 +1,4 @@
-import dynamic from "next/dynamic";
-
-// Dynamically import components for better performance
-const AboutHero = dynamic(() => import("@/components/Heros/AboutHero"), {
-  loading: () => (
-    <div className="min-h-screen flex justify-center items-center bg-[#121212]">
-      <div className="animate-pulse text-[#f5f543] text-xl">Loading...</div>
-    </div>
-  ),
-});
-
-const AboutClient = dynamic(() => import("@/components/about/AboutClient"), {
-  loading: () => <div className="h-96"></div>,
-});
+import AboutContent from "@/components/about/AboutContent";
 
 // Enhanced metadata with canonical URL and comprehensive SEO
 export const metadata = {
@@ -192,9 +179,9 @@ const breadcrumbJsonLd = {
   ],
 };
 
-const About = () => {
+export default function AboutPage() {
   return (
-    <main className="bg-[#121212] min-h-screen">
+    <>
       {/* Person JSON-LD */}
       <script
         type="application/ld+json"
@@ -211,13 +198,8 @@ const About = () => {
         }}
       />
 
-      {/* Hero Section */}
-      <AboutHero />
-
-      {/* Main About Content */}
-      <AboutClient />
-    </main>
+      {/* Client Component with all animations */}
+      <AboutContent />
+    </>
   );
-};
-
-export default About;
+}

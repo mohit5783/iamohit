@@ -31,6 +31,7 @@
     "tailwindcss": "4.1.16"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.16"
+    "@tailwindcss/postcss": "^4.1.16",
+    "baseline-browser-mapping": "^2.9.7"
   }
 }
