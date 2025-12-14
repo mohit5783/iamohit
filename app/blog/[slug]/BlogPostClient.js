@@ -1,487 +1,603 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import { useEffect, useState } from "react";
 import {
   FiCalendar,
   FiClock,
+  FiTag,
+  FiFolder,
+  FiBookOpen,
   FiArrowLeft,
+  FiArrowRight,
+  FiShare2,
   FiTwitter,
   FiLinkedin,
-  FiCheck,
-  FiX,
+  FiLink,
 } from "react-icons/fi";
 
-// Custom components for ReactMarkdown with framer-motion animations
+// Custom components for ReactMarkdown
 const MarkdownComponents = {
-  h1: ({ node, ...props }) => (
-    <motion.h1
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="text-4xl md:text-5xl font-bold text-white mb-6 mt-12"
-      {...props}
-    />
-  ),
-  h2: ({ node, ...props }) => (
-    <motion.h2
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="text-3xl md:text-4xl font-bold text-white mb-4 mt-10"
-      {...props}
-    />
-  ),
-  h3: ({ node, ...props }) => (
-    <motion.h3
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="text-2xl md:text-3xl font-semibold text-white mb-3 mt-8"
-      {...props}
-    />
-  ),
-  p: ({ node, ...props }) => (
-    <motion.p
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-      className="text-gray-300 leading-relaxed mb-6 text-lg"
-      {...props}
-    />
-  ),
-  ul: ({ node, ...props }) => (
-    <motion.ul
-      initial={{ opacity: 0, x: -10 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-      className="space-y-3 mb-6 ml-6"
-      {...props}
-    />
-  ),
-  ol: ({ node, ...props }) => (
-    <motion.ol
-      initial={{ opacity: 0, x: -10 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-      className="space-y-4 mb-8 ml-2"
-      {...props}
-    />
-  ),
-  li: ({ node, children, ordered, ...props }) => {
-    // Check if this is part of an ordered list
-    if (ordered || node?.position) {
-      return (
-        <li className="text-gray-300 leading-relaxed pl-2" {...props}>
-          {children}
-        </li>
-      );
-    }
-
-    return (
-      <li className="flex items-start gap-3 text-gray-300" {...props}>
-        <span className="text-[#f5f543] mt-1.5 shrink-0">•</span>
-        <span className="flex-1 leading-relaxed">{children}</span>
-      </li>
-    );
-  },
-  // Table components with professional styling
-  table: ({ node, ...props }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="overflow-x-auto my-8"
-    >
-      <table
-        className="min-w-full border-collapse bg-gray-900/50 rounded-lg overflow-hidden border border-gray-800"
-        {...props}
-      />
-    </motion.div>
-  ),
-  thead: ({ node, ...props }) => (
-    <thead className="bg-gray-900 border-b border-gray-700" {...props} />
-  ),
-  tbody: ({ node, ...props }) => <tbody {...props} />,
-  tr: ({ node, ...props }) => (
-    <tr
-      className="border-b border-gray-800 hover:bg-gray-800/30 transition-colors"
-      {...props}
-    />
-  ),
-  th: ({ node, children, ...props }) => (
-    <th
-      className="px-6 py-4 text-left text-sm font-semibold text-white border-r border-gray-800 last:border-r-0"
-      {...props}
+  h1: ({ children }) => (
+    <h1
+      id={generateId(children)}
+      className="text-4xl font-bold mt-12 mb-6 text-white scroll-mt-24"
     >
       {children}
-    </th>
+    </h1>
   ),
-  td: ({ node, children, ...props }) => {
-    // Check if content contains checkmark or X symbols for special rendering
-    const childText =
-      typeof children === "string"
-        ? children
-        : Array.isArray(children)
-        ? children.join("")
-        : "";
-
-    // Handle ✓ or Yes
-    if (childText === "✓" || childText.toLowerCase().trim() === "yes") {
-      return (
-        <td
-          className="px-6 py-4 text-sm border-r border-gray-800 last:border-r-0"
-          {...props}
-        >
-          <span className="flex items-center gap-2 text-green-400 font-medium">
-            <FiCheck className="text-lg" />
-            <span>Yes</span>
-          </span>
-        </td>
-      );
-    }
-
-    // Handle ✗ or No
-    if (
-      childText === "✗" ||
-      childText === "❌" ||
-      childText.toLowerCase().trim() === "no"
-    ) {
-      return (
-        <td
-          className="px-6 py-4 text-sm border-r border-gray-800 last:border-r-0"
-          {...props}
-        >
-          <span className="flex items-center gap-2 text-red-400 font-medium">
-            <FiX className="text-lg" />
-            <span>No</span>
-          </span>
-        </td>
-      );
-    }
-
-    // Regular cell
-    return (
-      <td
-        className="px-6 py-4 text-sm text-gray-300 border-r border-gray-800 last:border-r-0"
-        {...props}
-      >
-        {children}
-      </td>
-    );
-  },
-  code: ({ node, inline, className, children, ...props }) => {
+  h2: ({ children }) => (
+    <h2
+      id={generateId(children)}
+      className="text-3xl font-bold mt-10 mb-4 text-white scroll-mt-24"
+    >
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3
+      id={generateId(children)}
+      className="text-2xl font-semibold mt-8 mb-3 text-white scroll-mt-24"
+    >
+      {children}
+    </h3>
+  ),
+  h4: ({ children }) => (
+    <h4
+      id={generateId(children)}
+      className="text-xl font-semibold mt-6 mb-2 text-white scroll-mt-24"
+    >
+      {children}
+    </h4>
+  ),
+  p: ({ children }) => (
+    <p className="text-gray-300 leading-relaxed mb-4">{children}</p>
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      className="text-[#f5f543] hover:underline"
+      target={href?.startsWith("http") ? "_blank" : undefined}
+      rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
+    >
+      {children}
+    </a>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc list-inside mb-4 text-gray-300 space-y-2 ml-4">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal list-inside mb-4 text-gray-300 space-y-2 ml-4">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="text-gray-300">{children}</li>,
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-[#f5f543] pl-4 italic text-gray-400 my-6">
+      {children}
+    </blockquote>
+  ),
+  code: ({ inline, className, children }) => {
     if (inline) {
       return (
-        <code
-          className="bg-gray-900 px-2 py-1 rounded text-[#f5f543] font-mono text-sm"
-          {...props}
-        >
+        <code className="bg-gray-800 px-2 py-1 rounded text-[#f5f543] text-sm">
           {children}
         </code>
       );
     }
     return (
-      <code className={className} {...props}>
-        {children}
-      </code>
+      <code className={`${className} block overflow-x-auto`}>{children}</code>
     );
   },
-  pre: ({ node, ...props }) => (
-    <motion.pre
-      initial={{ opacity: 0, x: -20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="bg-gray-900 p-4 rounded-xl overflow-x-auto mb-6 border border-gray-800"
-      {...props}
-    />
+  pre: ({ children }) => (
+    <pre className="bg-[#1a1a1a] rounded-lg p-4 overflow-x-auto my-6 border border-gray-800">
+      {children}
+    </pre>
   ),
-  blockquote: ({ node, ...props }) => (
-    <motion.blockquote
-      initial={{ opacity: 0, x: -20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="border-l-4 border-[#f5f543] pl-6 py-2 my-6 italic text-gray-400"
-      {...props}
-    />
+  table: ({ children }) => (
+    <div className="overflow-x-auto my-6">
+      <table className="min-w-full border border-gray-700 rounded-lg overflow-hidden">
+        {children}
+      </table>
+    </div>
   ),
-  a: ({ node, ...props }) => (
-    <a
-      className="text-[#f5f543] hover:underline transition-all hover:text-[#f5f543]/80"
-      target="_blank"
-      rel="noopener noreferrer"
-      {...props}
-    />
+  thead: ({ children }) => <thead className="bg-gray-800">{children}</thead>,
+  th: ({ children }) => (
+    <th className="px-4 py-3 text-left text-[#f5f543] font-semibold border-b border-gray-700">
+      {children}
+    </th>
   ),
-  img: ({ node, ...props }) => (
-    <motion.img
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="rounded-lg my-6"
-      {...props}
-    />
+  td: ({ children }) => (
+    <td className="px-4 py-3 text-gray-300 border-b border-gray-800">
+      {children}
+    </td>
   ),
-  hr: ({ node, ...props }) => (
-    <motion.hr
-      initial={{ opacity: 0, scaleX: 0 }}
-      whileInView={{ opacity: 1, scaleX: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-      className="my-12 border-gray-800"
-      {...props}
-    />
+  img: ({ src, alt }) => (
+    <span className="block my-6">
+      <Image
+        src={src}
+        alt={alt || "Blog image"}
+        width={800}
+        height={450}
+        className="rounded-lg"
+      />
+    </span>
   ),
-  strong: ({ node, ...props }) => (
-    <strong className="font-bold text-white" {...props} />
+  hr: () => <hr className="border-gray-700 my-8" />,
+  strong: ({ children }) => (
+    <strong className="font-bold text-white">{children}</strong>
   ),
-  em: ({ node, ...props }) => (
-    <em className="italic text-gray-300" {...props} />
-  ),
+  em: ({ children }) => <em className="italic text-gray-300">{children}</em>,
 };
 
-export default function BlogPostClient({ post }) {
-  // Fix hydration error by using state + useEffect
-  const [shareUrl, setShareUrl] = useState("");
-  const shareText = post.title;
+// Generate ID for headings (for ToC links)
+function generateId(children) {
+  const text =
+    typeof children === "string"
+      ? children
+      : Array.isArray(children)
+      ? children.map((c) => (typeof c === "string" ? c : "")).join("")
+      : "";
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+// Extract headings from content for ToC
+function extractHeadings(content) {
+  const headingRegex = /^(#{2,3})\s+(.+)$/gm;
+  const headings = [];
+  let match;
+
+  while ((match = headingRegex.exec(content)) !== null) {
+    headings.push({
+      level: match[1].length,
+      text: match[2],
+      id: generateId(match[2]),
+    });
+  }
+
+  return headings;
+}
+
+// Table of Contents Component
+function TableOfContents({ headings }) {
+  const [activeId, setActiveId] = useState("");
 
   useEffect(() => {
-    // Set share URL only on client side after mount
-    setShareUrl(window.location.href);
-  }, []);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "-100px 0px -80% 0px" }
+    );
 
-  const heroVariants = {
-    hidden: { opacity: 0, scale: 0.98 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 0.6, ease: "easeOut" },
-    },
-  };
+    headings.forEach(({ id }) => {
+      const element = document.getElementById(id);
+      if (element) observer.observe(element);
+    });
 
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
+    return () => observer.disconnect();
+  }, [headings]);
+
+  if (headings.length === 0) return null;
+
+  return (
+    <motion.nav
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
+      className="hidden xl:block sticky top-24 ml-8 w-64 max-h-[calc(100vh-8rem)] overflow-y-auto"
+    >
+      <div className="p-4 bg-gray-900/50 border border-gray-800 rounded-xl">
+        <h4 className="text-sm font-semibold text-[#f5f543] mb-3 flex items-center gap-2">
+          <FiBookOpen />
+          Table of Contents
+        </h4>
+        <ul className="space-y-2">
+          {headings.map(({ level, text, id }) => (
+            <li key={id}>
+              <a
+                href={`#${id}`}
+                className={`block text-sm transition-colors duration-200 ${
+                  level === 3 ? "pl-4" : ""
+                } ${
+                  activeId === id
+                    ? "text-[#f5f543]"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                {text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </motion.nav>
+  );
+}
+
+// Related Posts Component
+function RelatedPosts({ posts }) {
+  if (!posts || posts.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="mt-16"
+    >
+      <h3 className="text-2xl font-bold text-white mb-6">Related Articles</h3>
+      <div className="grid md:grid-cols-2 gap-6">
+        {posts.map((post) => (
+          <Link
+            key={post.slug}
+            href={`/blog/${post.slug}`}
+            className="group block p-4 bg-gray-900/50 border border-gray-800 rounded-xl hover:border-[#f5f543]/50 transition-all duration-300"
+          >
+            <div className="flex gap-4">
+              {post.image && (
+                <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden">
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-white group-hover:text-[#f5f543] transition-colors line-clamp-2 mb-2">
+                  {post.title}
+                </h4>
+                <p className="text-sm text-gray-400 line-clamp-2">
+                  {post.description}
+                </p>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// Series Navigation Component
+function SeriesNavigation({ series, seriesOrder, relatedPosts }) {
+  if (!series) return null;
+
+  // Find previous and next in series from related posts
+  const seriesPosts = relatedPosts?.filter((p) => p.series === series) || [];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="mb-8 p-4 bg-[#f5f543]/10 border border-[#f5f543]/30 rounded-xl"
+    >
+      <div className="flex items-center gap-2 text-[#f5f543] text-sm font-medium mb-2">
+        <FiFolder />
+        <span>Part of series: {series}</span>
+        {seriesOrder && (
+          <span className="text-gray-400">• Part {seriesOrder}</span>
+        )}
+      </div>
+      {seriesPosts.length > 0 && (
+        <div className="text-sm text-gray-400">
+          {seriesPosts.length} article{seriesPosts.length > 1 ? "s" : ""} in
+          this series
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// Share Buttons Component
+function ShareButtons({ title, url }) {
+  const [copied, setCopied] = useState(false);
+  const encodedTitle = encodeURIComponent(title);
+  const encodedUrl = encodeURIComponent(url);
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="min-h-screen pt-32 pb-20">
-      <div className="container mx-auto px-6">
-        {/* Back Button */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
-        >
-          <Link
-            href="/blog"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-[#f5f543] transition-colors group"
-          >
-            <FiArrowLeft className="group-hover:-translate-x-1 transition-transform" />
-            <span>Back to Blog</span>
-          </Link>
-        </motion.div>
+    <div className="flex items-center gap-3">
+      <span className="text-gray-400 text-sm flex items-center gap-1">
+        <FiShare2 />
+        Share:
+      </span>
+      <a
+        href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="p-2 bg-gray-800 rounded-lg hover:bg-[#1DA1F2] transition-colors"
+        title="Share on Twitter"
+      >
+        <FiTwitter className="w-4 h-4" />
+      </a>
+      <a
+        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="p-2 bg-gray-800 rounded-lg hover:bg-[#0077B5] transition-colors"
+        title="Share on LinkedIn"
+      >
+        <FiLinkedin className="w-4 h-4" />
+      </a>
+      <button
+        onClick={copyLink}
+        className="p-2 bg-gray-800 rounded-lg hover:bg-[#f5f543] hover:text-black transition-colors"
+        title="Copy link"
+      >
+        <FiLink className="w-4 h-4" />
+      </button>
+      {copied && (
+        <span className="text-green-400 text-sm animate-pulse">Copied!</span>
+      )}
+    </div>
+  );
+}
 
-        {/* Article Header */}
-        <motion.div
-          variants={heroVariants}
-          initial="hidden"
-          animate="visible"
-          className="mb-12 space-y-6"
-        >
-          {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
+export default function BlogPostClient({ post, relatedPosts = [] }) {
+  const headings = post.toc ? extractHeadings(post.content) : [];
+  const postUrl = `https://iamohit.com/blog/${post.slug}`;
+
+  return (
+    <div className="min-h-screen bg-[#121212] mt-16">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="flex gap-8">
+          {/* Main Content */}
+          <div className="flex-1 max-w-4xl">
+            {/* Back to Blog */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Link
+                href="/blog"
+                className="inline-flex items-center gap-2 text-gray-400 hover:text-[#f5f543] transition-colors mb-8"
+              >
+                <FiArrowLeft />
+                Back to Blog
+              </Link>
+            </motion.div>
+
+            {/* Series Navigation */}
+            <SeriesNavigation
+              series={post.series}
+              seriesOrder={post.seriesOrder}
+              relatedPosts={relatedPosts}
+            />
+
+            {/* Article Header */}
+            <motion.header
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="flex flex-wrap gap-2"
+              transition={{ duration: 0.5 }}
+              className="mb-8"
             >
-              {post.tags.map((tag, index) => (
+              {/* Category Badge */}
+              {post.category && (
                 <motion.span
-                  key={tag}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
-                  className="text-xs px-3 py-1 bg-[#f5f543]/10 text-[#f5f543] rounded-full border border-[#f5f543]/20"
+                  transition={{ duration: 0.3 }}
+                  className="inline-flex items-center gap-1 text-sm px-3 py-1 bg-[#f5f543]/20 text-[#f5f543] rounded-full mb-4"
                 >
-                  {tag}
+                  <FiFolder className="w-3 h-3" />
+                  {post.category}
                 </motion.span>
-              ))}
-            </motion.div>
-          )}
-
-          {/* Title */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-4xl md:text-6xl font-bold text-white leading-tight"
-          >
-            {post.title}
-          </motion.h1>
-
-          {/* Description */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="text-xl text-gray-400 leading-relaxed"
-          >
-            {post.description}
-          </motion.p>
-
-          {/* Meta Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-wrap items-center gap-6 text-sm text-gray-500"
-          >
-            <div className="flex items-center gap-2">
-              <FiCalendar className="text-[#f5f543]" />
-              <time>
-                {new Date(post.date).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </time>
-            </div>
-            <div className="flex items-center gap-2">
-              <FiClock className="text-[#f5f543]" />
-              <span>{post.readTime}</span>
-            </div>
-            <div className="ml-auto flex items-center gap-3">
-              <span className="text-gray-600">Share:</span>
-              {shareUrl && (
-                <>
-                  <Link
-                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                      shareText
-                    )}&url=${encodeURIComponent(shareUrl)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-[#1DA1F2] transition-colors"
-                  >
-                    <FiTwitter size={20} />
-                  </Link>
-                  <Link
-                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                      shareUrl
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-[#0077b5] transition-colors"
-                  >
-                    <FiLinkedin size={20} />
-                  </Link>
-                </>
               )}
-            </div>
-          </motion.div>
 
-          {/* Featured Image */}
-          {post.image && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="relative h-96 xl:h-[768] rounded-2xl overflow-hidden border border-gray-800"
+              {/* Title */}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                {post.title}
+              </h1>
+
+              {/* Meta Info */}
+              <div className="flex flex-wrap items-center gap-4 text-gray-400 text-sm mb-6">
+                <div className="flex items-center gap-1">
+                  <FiCalendar className="text-[#f5f543]" />
+                  <time dateTime={post.date}>
+                    {new Date(post.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </time>
+                </div>
+                {post.modifiedDate && post.modifiedDate !== post.date && (
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <span>Updated:</span>
+                    <time dateTime={post.modifiedDate}>
+                      {new Date(post.modifiedDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </time>
+                  </div>
+                )}
+                <div className="flex items-center gap-1">
+                  <FiClock className="text-[#f5f543]" />
+                  <span>{post.readTime}</span>
+                </div>
+                {post.wordCount && (
+                  <div className="text-gray-500">
+                    {post.wordCount.toLocaleString()} words
+                  </div>
+                )}
+              </div>
+
+              {/* Tags */}
+              {post.tags && post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {post.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 text-xs px-3 py-1 bg-gray-800 text-gray-300 rounded-full border border-gray-700"
+                    >
+                      <FiTag className="w-3 h-3" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Share Buttons */}
+              <ShareButtons title={post.title} url={postUrl} />
+
+              {/* Featured Image */}
+              {post.image && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="relative h-72 md:h-96 lg:h-[500px] rounded-2xl overflow-hidden border border-gray-800 mt-8"
+                >
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    priority
+                    className="object-cover"
+                  />
+                </motion.div>
+              )}
+            </motion.header>
+
+            {/* Excerpt/Summary */}
+            {post.excerpt && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="mb-8 p-6 bg-gray-900/50 border-l-4 border-[#f5f543] rounded-r-xl"
+              >
+                <p className="text-lg text-gray-300 italic leading-relaxed">
+                  {post.excerpt}
+                </p>
+              </motion.div>
+            )}
+
+            {/* Article Content */}
+            <motion.article
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="prose prose-invert prose-lg max-w-none"
             >
-              <Image src={post.image} alt={post.title} fill priority />
-            </motion.div>
-          )}
-        </motion.div>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+                components={MarkdownComponents}
+              >
+                {post.content}
+              </ReactMarkdown>
+            </motion.article>
 
-        {/* Article Content - Using ReactMarkdown instead of MDXRemote */}
-        <motion.article
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="prose prose-invert prose-lg max-w-none"
-        >
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
-            components={MarkdownComponents}
-          >
-            {post.content}
-          </ReactMarkdown>
-        </motion.article>
-
-        {/* Author Bio */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mt-16 p-8 bg-linear-to-br from-gray-900 to-black border border-gray-800 rounded-2xl"
-        >
-          <div className="flex items-center gap-6">
+            {/* Author Bio */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4 }}
-              className="w-20 h-20 rounded-full bg-linear-to-br from-[#f5f543] to-yellow-600 flex items-center justify-center text-3xl font-bold text-black shrink-0"
+              transition={{ duration: 0.5 }}
+              className="mt-16 p-8 bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-2xl"
             >
-              M
+              <div className="flex items-center gap-6">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4 }}
+                  className="w-20 h-20 rounded-full bg-gradient-to-br from-[#f5f543] to-yellow-600 flex items-center justify-center text-3xl font-bold text-black shrink-0"
+                >
+                  M
+                </motion.div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {post.author || "Mohit Shrivastava"}
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-3">
+                    Senior Full-Stack Engineer with 18+ years of experience.
+                    Head of IT at Free Malaysia Today. Scaled platforms to 8.5M
+                    monthly users. Top 3% on StackOverflow. Specialized in
+                    Next.js, performance optimization, and high-traffic systems.
+                  </p>
+                  <div className="flex gap-3">
+                    <a
+                      href="https://twitter.com/mohit5783"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-[#1DA1F2] transition-colors"
+                    >
+                      <FiTwitter className="w-5 h-5" />
+                    </a>
+                    <a
+                      href="https://linkedin.com/in/mohit5783"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-[#0077B5] transition-colors"
+                    >
+                      <FiLinkedin className="w-5 h-5" />
+                    </a>
+                  </div>
+                </div>
+              </div>
             </motion.div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-white mb-2">
-                {post.author || "Mohit Shrivastava"}
-              </h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Senior Full-Stack Engineer with 18+ years of experience. Scaled
-                FMT to 8.5M monthly users. Top 3% on StackOverflow. Specialized
-                in Next.js, performance optimization, and high-traffic systems.
-              </p>
-            </div>
-          </div>
-        </motion.div>
 
-        {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mt-12 text-center p-8 bg-linear-to-r from-[#f5f543]/10 to-transparent border border-[#f5f543]/20 rounded-2xl"
-        >
-          <h3 className="text-2xl font-bold text-white mb-4">
-            Need help scaling your platform?
-          </h3>
-          <p className="text-gray-400 mb-6">
-            Let's discuss how I can help you achieve similar results.
-          </p>
-          <Link
-            href="/contact"
-            className="inline-block px-8 py-3 bg-[#f5f543] text-black font-semibold rounded-lg hover:bg-[#f5f543]/90 transition-all hover:scale-105"
-          >
-            Get In Touch
-          </Link>
-        </motion.div>
+            {/* Related Posts */}
+            <RelatedPosts posts={relatedPosts} />
+
+            {/* CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mt-12 text-center p-8 bg-gradient-to-r from-[#f5f543]/10 to-transparent border border-[#f5f543]/20 rounded-2xl"
+            >
+              <h3 className="text-2xl font-bold text-white mb-4">
+                Need help scaling your platform?
+              </h3>
+              <p className="text-gray-400 mb-6">
+                Let's discuss how I can help you achieve similar results.
+              </p>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#f5f543] text-black font-semibold rounded-lg hover:bg-yellow-400 transition-colors"
+              >
+                Get In Touch
+                <FiArrowRight />
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Table of Contents Sidebar */}
+          {post.toc && headings.length > 0 && (
+            <TableOfContents headings={headings} />
+          )}
+        </div>
       </div>
     </div>
   );
