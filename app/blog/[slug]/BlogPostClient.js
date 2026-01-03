@@ -69,12 +69,12 @@ const MarkdownComponents = {
     </a>
   ),
   ul: ({ children }) => (
-    <ul className="list-disc list-inside mb-4 text-gray-300 space-y-2 ml-4">
+    <ul className="list-disc list-outside ml-6 space-y-2 mb-4 text-gray-300">
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol className="list-decimal list-inside mb-4 text-gray-300 space-y-2 ml-4">
+    <ol className="list-decimal list-outside ml-6 space-y-2 mb-4 text-gray-300">
       {children}
     </ol>
   ),
@@ -473,7 +473,7 @@ export default function BlogPostClient({ post, relatedPosts = [] }) {
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
-                  className="relative h-72 md:h-96 lg:h-[500px] rounded-2xl overflow-hidden border border-gray-800 mt-8"
+                  className="relative h-72 md:h-96 lg:h-[550px] rounded-2xl overflow-hidden border border-gray-800 mt-8"
                 >
                   <Image
                     src={post.image}

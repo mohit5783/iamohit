@@ -60,7 +60,7 @@ export const metadata = {
   title: {
     default:
       "Mohit Shrivastava | Senior Full-Stack Engineer | Next.js & Performance Specialist",
-    template: "%s | Mohit Shrivastava",
+    template: "%s | iAMohit",
   },
   description:
     "Senior Full-Stack Engineer specializing in Next.js and scalable news platforms. Scaled FMT to 8.5M monthly users with 184% growth and 60% faster load times. 18 years experience across 7 industries.",

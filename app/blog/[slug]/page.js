@@ -40,7 +40,7 @@ export async function generateMetadata({ params }) {
 
   return {
     // Basic metadata
-    title: `${post.title} | Mohit Shrivastava`,
+    title: `${post.title}`,
     description: post.description,
 
     // Use keywords array if available, otherwise fall back to tags
